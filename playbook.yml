@@ -1,0 +1,9 @@
+---
+
+- name: Ansible Playbook for configuring Homematic using PivCCU
+
+  hosts: homematic
+  roles:
+    - pivccu
+      #- homebridge
+  sudo: true

@@ -1,0 +1,68 @@
+- name: 'Add GPG Key for Docker'
+  apt_key: 
+    url: https://www.pivccu.de/piVCCU/public.key
+    state: present
+
+- name: 'Add Apt Repository for Docker'
+  apt_repository:
+    repo: "deb https://www.pivccu.de/piVCCU stable main"
+    state: present
+
+- name: 'Update APT package cache'
+  action: apt update_cache=yes
+
+- name: 'Upgrade APT to the lastest packages'
+  action: apt upgrade=safe
+
+- name: 'Install Apt packages'
+  apt: name={{item}} state=installed
+  with_items:
+    - pivccu-modules-raspberrypi
+
+- name: 'Disable serial console (serial0)'
+  replace: dest=/boot/cmdline.txt regexp='console=serial0,[0-9]+'
+
+- name: 'Disable serial console (ttyAMA0)'
+  replace: dest=/boot/cmdline.txt regexp='console=ttyAMA0,[0-9]+'
+
+- name: 'Enable UART GPIO pins'
+  blockinfile:
+    path: /boot/config.txt
+    block: |
+      dtoverlay=pi3-miniuart-bt
+      enable_uart=1
+      force_turbo=1
+
+- name: 'Remove dhcpcd5 package'
+  apt: 
+    name: dhcpcd5
+    state: absent
+
+- name: 'Install bridge-utils package'
+  apt: 
+    name: bridge-utils
+    state: installed
+
+- name: 'Add network bridge'
+  blockinfile:
+    path: /etc/network/interfaces
+    block: |
+      auto br0
+      iface br0 inet dhcp
+        bridge_ports eth0
+
+- name: 'Restart host'
+  shell: sleep 2 && shutdown -r now "Ansible updates triggered"
+  async: 1
+  poll: 0
+  ignore_errors: true
+
+- name: Wait for server to restart
+  wait_for_connection:
+    delay: 10
+    timeout: 300
+
+- name: 'Install container package'
+  apt: 
+    name: pivccu
+    state: installed
