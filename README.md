@@ -7,4 +7,4 @@ Run `ansible-playbook playbook.yml -i hosts --sudo` (you might want to adjust th
 
 ## License
 
-See License.md for details.
+See [LICENSE](LICENSE) for details.
